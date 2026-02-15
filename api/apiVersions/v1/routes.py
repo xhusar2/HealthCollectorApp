@@ -26,7 +26,7 @@ def login():
     password = request.json['password']
     fcmToken = request.json['fcmToken'] if 'fcmToken' in request.json else None
 
-    db = mongo['hcgateway']
+    db = mongo['heathconnectapp']
     usrStore = db['users']
 
     user = usrStore.find_one({'username': username})
@@ -66,7 +66,7 @@ def sync(method):
     userid = request.json['userid']
     print(userid)
 
-    db = mongo['hcgateway']
+    db = mongo['heathconnectapp']
     usrStore = db['users']
 
     try: user = usrStore.find_one({'_id': userid})
@@ -82,7 +82,7 @@ def sync(method):
         data = [data]
     print(method, len(data))
 
-    db = mongo['hcgateway_'+userid]
+    db = mongo['heathconnectapp_'+userid]
     collection = db[method]
     
     for item in data:
@@ -125,7 +125,7 @@ def fetch(method):
         return jsonify({'error': 'no method provided'}), 400
 
     userid = request.json['userid']
-    db = mongo['hcgateway']
+    db = mongo['heathconnectapp']
     usrStore = db['users']
 
     try: user = usrStore.find_one({'_id': userid})
@@ -139,7 +139,7 @@ def fetch(method):
     else:
         queries = request.json['queries']
     
-    db = mongo['hcgateway_'+userid]
+    db = mongo['heathconnectapp_'+userid]
     collection = db[method]
     
     docs = []
@@ -171,7 +171,7 @@ def pushData(method):
         if ("startTime" in r and "endTime" not in r) or ("startTime" not in r and "endTime" in r):
             return jsonify({'error': 'start time and end time must be provided together.'}), 400
 
-    db = mongo['hcgateway']
+    db = mongo['heathconnectapp']
     usrStore = db['users']
 
     try: user = usrStore.find_one({'_id': userid})
@@ -209,7 +209,7 @@ def delData(method):
 
     fixedMethodName = method[0].upper() + method[1:]
 
-    db = mongo['hcgateway']
+    db = mongo['heathconnectapp']
     usrStore = db['users']
 
     try: user = usrStore.find_one({'_id': userid})
@@ -252,7 +252,7 @@ def delFromDb(method):
     if type(uuids) != list:
         uuids = [uuids]
 
-    db = mongo['hcgateway_'+userid]
+    db = mongo['heathconnectapp_'+userid]
     collection = db[method]
     print(collection)
     for uuid in uuids:

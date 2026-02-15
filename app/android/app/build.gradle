@@ -84,9 +84,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'dev.shuchir.hcgateway'
+    namespace 'xhusar2.heathconnectapp'
     defaultConfig {
-        applicationId 'dev.shuchir.hcgateway'
+        applicationId 'xhusar2.heathconnectapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

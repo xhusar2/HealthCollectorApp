@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "HCGateway",
-    "slug": "hcgateway",
+    "name": "HealthConnectApp",
+    "slug": "heathconnectapp",
     "version": "2.2.1",
     "plugins": [
       "expo-health-connect",
@@ -19,8 +19,8 @@
         "@sentry/react-native/expo",
         {
           "url": "https://sentry.io/",
-          "project": "hcgateway-app",
-          "organization": "shuchir-jain"
+          "project": "heathconnectapp-app",
+          "organization": "xhusar2"
         }
       ],
       "@react-native-firebase/app",
@@ -40,7 +40,7 @@
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./firebase/google-services.json",
-      "package": "dev.shuchir.hcgateway",
+      "package": "xhusar2.heathconnectapp",
       "permissions": [
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
         "android.permission.health.READ_BASAL_BODY_TEMPERATURE",

@@ -1,4 +1,4 @@
-package dev.shuchir.hcgateway
+package xhusar2.heathconnectapp
 
 import android.os.Build
 import android.os.Bundle

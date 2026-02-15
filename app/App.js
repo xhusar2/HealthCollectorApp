@@ -91,7 +91,7 @@ messaging().onMessage(remoteMessage => {
 });
 
 let login;
-let apiBase = 'https://api.hcgateway.shuchir.dev';
+let apiBase = 'https://api.husarprojects.com';
 let lastSync = null;
 let taskDelay = 7200 * 1000; // 2 hours
 let fullSyncMode = true; // Default to full 30-day sync
@@ -342,8 +342,8 @@ const sync = async (customStartTime, customEndTime) => {
             try {
             ReactNativeForegroundService.update({
               id: 1244,
-              title: 'HCGateway Sync Progress',
-              message: `HCGateway is currently syncing... [${numRecordsSynced}/${numRecords}]`,
+              title: 'HealthConnectApp Sync Progress',
+              message: `HealthConnectApp is currently syncing... [${numRecordsSynced}/${numRecords}]`,
               icon: 'ic_launcher',
               setOnlyAlertOnce: true,
               color: '#000000',
@@ -356,8 +356,8 @@ const sync = async (customStartTime, customEndTime) => {
             if (numRecordsSynced == numRecords) {
               ReactNativeForegroundService.update({
                 id: 1244,
-                title: 'HCGateway Sync Progress',
-                message: `HCGateway is working in the background to sync your data.`,
+                title: 'HealthConnectApp Sync Progress',
+                message: `HealthConnectApp is working in the background to sync your data.`,
                 icon: 'ic_launcher',
                 setOnlyAlertOnce: true,
                 color: '#000000',
@@ -381,8 +381,8 @@ const sync = async (customStartTime, customEndTime) => {
         try {
         ReactNativeForegroundService.update({
           id: 1244,
-          title: 'HCGateway Sync Progress',
-          message: `HCGateway is currently syncing... [${numRecordsSynced}/${numRecords}]`,
+          title: 'HealthConnectApp Sync Progress',
+          message: `HealthConnectApp is currently syncing... [${numRecordsSynced}/${numRecords}]`,
           icon: 'ic_launcher',
           setOnlyAlertOnce: true,
           color: '#000000',
@@ -395,8 +395,8 @@ const sync = async (customStartTime, customEndTime) => {
         if (numRecordsSynced == numRecords) {
           ReactNativeForegroundService.update({
             id: 1244,
-            title: 'HCGateway Sync Progress',
-            message: `HCGateway is working in the background to sync your data.`,
+            title: 'HealthConnectApp Sync Progress',
+            message: `HealthConnectApp is working in the background to sync your data.`,
             icon: 'ic_launcher',
             setOnlyAlertOnce: true,
             color: '#000000',
@@ -519,7 +519,7 @@ export default Sentry.wrap(function App() {
         ReactNativeForegroundService.add_task(() => sync(), {
           delay: taskDelay,
           onLoop: true,
-          taskId: 'hcgateway_sync',
+          taskId: 'heathconnectapp_sync',
           onError: e => console.log(`Error logging:`, e),
         });
 
@@ -532,8 +532,8 @@ export default Sentry.wrap(function App() {
 
         ReactNativeForegroundService.start({
           id: 1244,
-          title: 'HCGateway Sync Service',
-          message: 'HCGateway is working in the background to sync your data.',
+          title: 'HealthConnectApp Sync Service',
+          message: 'HealthConnectApp is working in the background to sync your data.',
           icon: 'ic_launcher',
           setOnlyAlertOnce: true,
           color: '#000000',

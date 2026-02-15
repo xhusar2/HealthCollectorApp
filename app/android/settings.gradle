@@ -1,4 +1,4 @@
-rootProject.name = 'HCGateway'
+rootProject.name = 'HealthConnectApp'
 
 dependencyResolutionManagement {
   versionCatalogs {

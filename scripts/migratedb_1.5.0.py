@@ -2,7 +2,7 @@ APPWRITE_HOST = input("Enter Appwrite Host (ex: https://appwrite.shuchir.dev/v1)
 APPWRITE_ID = input("Enter Appwrite Project ID: ")
 APPWRITE_KEY = input("Enter Appwrite API Key: ")
 
-MONGO_URI = input("Enter MongoDB URI (ex: mongodb://localhost:27017/hcgateway): ")
+MONGO_URI = input("Enter MongoDB URI (ex: mongodb://localhost:27017/heathconnectapp): ")
 
 import pymongo
 
@@ -43,7 +43,7 @@ for dbdata in alldbs:
     print("Migrating data for user: ", dbid)
 
     user = users.get(dbid)
-    db_ = mongo["hcgateway"]
+    db_ = mongo["heathconnectapp"]
     collection = db_['users']
     collection.insert_one({
         "_id": dbid,
@@ -67,7 +67,7 @@ for dbdata in alldbs:
 
             doc['_id'] = doc['id']
 
-        db_ = mongo["hcgateway_"+dbid]
+        db_ = mongo["heathconnectapp_"+dbid]
         col = db_[collection['name']]
         col.insert_many(docs)
 
