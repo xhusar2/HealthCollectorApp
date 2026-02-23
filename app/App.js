@@ -91,7 +91,7 @@ messaging().onMessage(remoteMessage => {
 });
 
 let login;
-let apiBase = 'https://api.husarprojects.com';
+let apiBase = 'https://api.rhusar.tech';
 let lastSync = null;
 let taskDelay = 7200 * 1000; // 2 hours
 let fullSyncMode = true; // Default to full 30-day sync

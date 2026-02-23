@@ -1,29 +1,29 @@
 {
-    "project_info": {
-      "project_number": "1047860968893",
-      "project_id": "hcgateway-fcm",
-      "storage_bucket": "hcgateway-fcm.appspot.com"
-    },
-    "client": [
-      {
-        "client_info": {
-          "mobilesdk_app_id": "1:1047860968893:android:6fdf29797dda6c99dde6d4",
-          "android_client_info": {
-            "package_name": "dev.shuchir.hcgateway"
-          }
-        },
-        "oauth_client": [],
-        "api_key": [
-          {
-            "current_key": "AIzaSyDFy0mrwlLwAXUmhQqjsUg8PHDtIuiSgzI"
-          }
-        ],
-        "services": {
-          "appinvite_service": {
-            "other_platform_oauth_client": []
-          }
+  "project_info": {
+    "project_number": "650399066218",
+    "project_id": "healthcollectorapp",
+    "storage_bucket": "healthcollectorapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:650399066218:android:590960f335b4ef4d56c213",
+        "android_client_info": {
+          "package_name": "xhusar2.heathconnectapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrTOfV6xN1mx8pNbzMDjO64MLhF_I2020"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
         }
       }
-    ],
-    "configuration_version": "1"
-  }
+    }
+  ],
+  "configuration_version": "1"
+}
