@@ -1,0 +1,30 @@
+# Run on homelab (or wherever Grafana should live). InfluxDB + Grafana.
+# First run: set INFLUX_TOKEN to a long random string; use the same token in ETL and Grafana datasource.
+# Create dirs: monitoring/influxdb-data, monitoring/grafana-data
+
+services:
+  influxdb:
+    image: influxdb:2.7
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./monitoring/influxdb-data:/var/lib/influxdb2
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_ADMIN_PASSWORD:-changeme}
+      DOCKER_INFLUXDB_INIT_ORG: family
+      DOCKER_INFLUXDB_INIT_BUCKET: health
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:-my-super-secret-auth-token}
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3000}
+    volumes:
+      - ./monitoring/grafana-data:/var/lib/grafana

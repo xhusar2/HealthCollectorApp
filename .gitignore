@@ -64,7 +64,11 @@ buck-out/
 /vendor/bundle/
 
 .env
+etl/.env
+etl/users.json
 test.py
+monitoring/influxdb-data/
+monitoring/grafana-data/
 __pycache__/
 flask_session/
 service-account.json
