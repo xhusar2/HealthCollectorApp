@@ -141,6 +141,23 @@ Follow these steps to set up Firebase:
    ```
 You can access the API at `http://localhost:6644`
 
+### Split deployment (Homelab + VPS)
+To run the API on a public VPS and keep the database at home:
+
+- **Homelab:** Mongo only. Copy `.env.example` to `.env`, set `MONGO_USER` and `MONGO_PASSWORD`, then:
+  ```bash
+  docker compose -f docker-compose.homelab.yml up -d
+  ```
+  Optionally run [InfluxDB + Grafana](docker-compose.monitoring.yml) and the [ETL](etl/README.md) so family health data appears in Grafana.
+
+- **VPS:** API only. Set up an SSH reverse tunnel from homelab to the VPS so that `127.0.0.1:27017` on the VPS forwards to Mongo on the homelab. In `api/.env` set:
+  `MONGO_URI=mongodb://<MONGO_USER>:<MONGO_PASSWORD>@127.0.0.1:27017/hcgateway?authSource=admin`
+  (use the same credentials as on the homelab.) Then:
+  ```bash
+  docker compose -f docker-compose.vps.yml up -d
+  ```
+  The API uses host network mode so it can reach the tunnel on `127.0.0.1:27017`.
+
 ### Manual
 #### Server
 - Prerequisites: Python 3, mongoDB

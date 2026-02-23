@@ -1,0 +1,15 @@
+# Homelab: Mongo only. API runs on VPS and connects via SSH tunnel.
+# Create .env with MONGO_USER and MONGO_PASSWORD, then:
+#   docker compose -f docker-compose.homelab.yml up -d
+
+services:
+  db:
+    image: mongo:latest
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./db:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}

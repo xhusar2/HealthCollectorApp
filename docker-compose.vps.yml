@@ -1,0 +1,14 @@
+# VPS: API only. Mongo is on homelab; use SSH reverse tunnel so 127.0.0.1:27017 on VPS reaches homelab Mongo.
+# In api/.env set MONGO_URI=mongodb://USER:PASSWORD@127.0.0.1:27017/hcgateway?authSource=admin (same USER/PASSWORD as homelab).
+#   docker compose -f docker-compose.vps.yml up -d
+
+services:
+  api:
+    image: ghcr.io/shuchirj/hcgateway:latest
+    network_mode: host
+    env_file:
+      - ./api/.env
+    container_name: hcgateway_api
+    restart: always
+    volumes:
+      - ./api/service-account.json:/app/service-account.json
