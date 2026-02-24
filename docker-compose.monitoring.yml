@@ -28,3 +28,26 @@ services:
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3000}
     volumes:
       - ./monitoring/grafana-data:/var/lib/grafana
+
+  etl:
+    build: ./etl
+    restart: unless-stopped
+    environment:
+      # API the ETL should call (VPS)
+      HEALTH_API_URL: http://${API_URL}:6644
+
+      # Users file with credentials (mounted below)
+      HEALTH_USERS_FILE: /secrets/users.json
+
+      # InfluxDB connection (same Influx as in this compose)
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: ${INFLUX_TOKEN}
+      INFLUX_ORG: family
+      INFLUX_BUCKET: health
+
+      # Optional: how often to run (seconds)
+      ETL_INTERVAL: 900
+
+    volumes:
+      # Not committed: copy users.json.example -> users.json and fill in real creds
+      - ./etl/users.json:/secrets/users.json:ro
