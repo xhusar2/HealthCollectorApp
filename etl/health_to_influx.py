@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """
-ETL: Fetch decrypted health data from the Health Collector API for each user,
-then write to InfluxDB with a 'user' tag so Grafana can show all family data.
-Run on a schedule (cron every 15-30 min). Requires HEALTH_API_URL, INFLUX_* env and HEALTH_USERS.
+ETL: Read health data from MongoDB (per-user DBs), decrypt locally with the same
+key derivation as the API, and write to InfluxDB with a 'user' tag for Grafana.
+No API or users file: requires MONGO_URI and INFLUX_* env. Run on a schedule (e.g. ETL_INTERVAL).
 """
 import os
 import json
 import sys
+import base64
 from datetime import datetime
-from urllib.parse import urljoin
 
-import requests
+from cryptography.fernet import Fernet
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
+import pymongo
 
-# Data types to fetch (API method names)
+# Collection names in Mongo (must match API method names)
 METHODS = [
     "activeCaloriesBurned",
     "bloodGlucose",
@@ -39,66 +40,27 @@ METHODS = [
 ]
 
 
-def load_users():
-    users_raw = os.environ.get("HEALTH_USERS")
-    if not users_raw:
-        path = os.environ.get("HEALTH_USERS_FILE", os.path.join(os.path.dirname(__file__), "users.json"))
-        if os.path.isfile(path):
-            with open(path) as f:
-                users_raw = f.read()
-        else:
-            print("Set HEALTH_USERS (JSON array of 'username:password') or HEALTH_USERS_FILE path.", file=sys.stderr)
-            sys.exit(1)
-    try:
-        data = json.loads(users_raw)
-    except json.JSONDecodeError:
-        # Allow "user1:pass1,user2:pass2"
-        data = [u.strip() for u in users_raw.split(",") if ":" in u]
-        data = [{"username": u.split(":")[0], "password": u.split(":", 1)[1]} for u in data]
-    if not data:
-        sys.exit(1)
-    if isinstance(data[0], str) and ":" in data[0]:
-        data = [{"username": u.split(":")[0], "password": u.split(":", 1)[1]} for u in data]
-    return data
+def derive_key(hashed_password: str) -> bytes:
+    """Same as API: key from hashed password for Fernet."""
+    return base64.urlsafe_b64encode(hashed_password.encode("utf-8").ljust(32)[:32])
 
 
-def login(api_base: str, username: str, password: str) -> str:
-    r = requests.post(
-        urljoin(api_base, "/api/v2/login"),
-        json={"username": username, "password": password},
-        headers={"Content-Type": "application/json"},
-        timeout=30,
-    )
-    r.raise_for_status()
-    return r.json()["token"]
-
-
-def fetch_method(api_base: str, token: str, method: str) -> list:
-    r = requests.post(
-        urljoin(api_base, "/api/v2/fetch/" + method),
-        json={},
-        headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
-        timeout=60,
-    )
-    if r.status_code == 404 or (r.status_code == 200 and not r.text.strip()):
-        return []
-    r.raise_for_status()
-    return r.json() if r.text else []
-
-
-def parse_ts(s: str) -> datetime:
-    if not s:
+def parse_ts(s) -> datetime:
+    if s is None:
         return None
+    if isinstance(s, datetime):
+        return s
     try:
-        if "Z" in s or "+" in s or s.count("-") >= 2:
-            return datetime.fromisoformat(s.replace("Z", "+00:00"))
-        return datetime.fromisoformat(s)
+        ss = str(s)
+        if "Z" in ss or "+" in ss or ss.count("-") >= 2:
+            return datetime.fromisoformat(ss.replace("Z", "+00:00"))
+        return datetime.fromisoformat(ss)
     except Exception:
         return None
 
 
 def doc_to_points(method: str, user: str, doc: dict) -> list:
-    """Convert one API doc to InfluxDB Point(s). Returns list of Point."""
+    """Convert one API-style doc (with decrypted 'data') to InfluxDB Point(s)."""
     start = parse_ts(doc.get("start"))
     end = parse_ts(doc.get("end"))
     data = doc.get("data") or {}
@@ -209,7 +171,11 @@ def doc_to_points(method: str, user: str, doc: dict) -> list:
 
 
 def main():
-    api_base = os.environ.get("HEALTH_API_URL", "http://127.0.0.1:6644").rstrip("/") + "/"
+    mongo_uri = os.environ.get("MONGO_URI")
+    if not mongo_uri:
+        print("Set MONGO_URI (e.g. mongodb://user:pass@host:27017/?authSource=admin).", file=sys.stderr)
+        sys.exit(1)
+
     influx_url = os.environ.get("INFLUX_URL", "http://127.0.0.1:8086")
     influx_token = os.environ.get("INFLUX_TOKEN")
     influx_org = os.environ.get("INFLUX_ORG", "family")
@@ -219,30 +185,52 @@ def main():
         print("Set INFLUX_TOKEN (and optionally INFLUX_URL, INFLUX_ORG, INFLUX_BUCKET).", file=sys.stderr)
         sys.exit(1)
 
-    users = load_users()
+    users_db_name = os.environ.get("MONGO_USERS_DB", "hcgateway")
+    data_db_prefix = os.environ.get("MONGO_DATA_DB_PREFIX", "hcgateway_")
+
+    client = pymongo.MongoClient(mongo_uri)
+    users_db = client[users_db_name]
+    users_coll = users_db["users"]
+
     write_api = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org).write_api(write_options=SYNCHRONOUS)
     total = 0
 
-    for u in users:
-        username = u.get("username") or u.get("user")
-        password = u.get("password")
-        if not username or not password:
+    for user_doc in users_coll.find({}, {"_id": 1, "username": 1, "password": 1}):
+        user_id = str(user_doc["_id"])
+        username = user_doc.get("username") or user_id
+        hashed = user_doc.get("password")
+        if not hashed:
+            print(f"Skipping user {username}: no password hash.", file=sys.stderr)
             continue
+
         try:
-            token = login(api_base, username, password)
+            key = derive_key(hashed)
+            fernet = Fernet(key)
         except Exception as e:
-            print(f"Login failed for {username}: {e}", file=sys.stderr)
+            print(f"Skipping user {username}: key derivation failed: {e}", file=sys.stderr)
             continue
+
+        data_db_name = data_db_prefix + user_id
+        if data_db_name not in client.list_database_names():
+            continue
+
+        data_db = client[data_db_name]
         for method in METHODS:
-            try:
-                docs = fetch_method(api_base, token, method)
-            except Exception as e:
-                print(f"Fetch {method} for {username}: {e}", file=sys.stderr)
-                continue
-            for doc in docs:
-                for point in doc_to_points(method, username, doc):
+            coll = data_db[method]
+            for doc in coll.find({}):
+                enc = doc.get("data")
+                if not enc:
+                    continue
+                try:
+                    decrypted = json.loads(fernet.decrypt(enc.encode()).decode())
+                except Exception as e:
+                    print(f"Decrypt failed {username}/{method} doc {doc.get('_id')}: {e}", file=sys.stderr)
+                    continue
+                out_doc = {"start": doc.get("start"), "end": doc.get("end"), "data": decrypted}
+                for point in doc_to_points(method, username, out_doc):
                     write_api.write(bucket=influx_bucket, record=point)
                     total += 1
+
     print(f"Wrote {total} points to InfluxDB.")
 
 

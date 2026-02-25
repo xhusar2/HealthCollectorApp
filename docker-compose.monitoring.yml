@@ -1,5 +1,5 @@
-# Run on homelab (or wherever Grafana should live). InfluxDB + Grafana.
-# First run: set INFLUX_TOKEN to a long random string; use the same token in ETL and Grafana datasource.
+# Run on homelab (or wherever Grafana should live). InfluxDB + Grafana + ETL.
+# First run: set INFLUX_TOKEN; set MONGO_URI so ETL can reach Mongo (e.g. mongodb://user:pass@host.docker.internal:27017/?authSource=admin).
 # Create dirs: monitoring/influxdb-data, monitoring/grafana-data
 
 services:
@@ -32,22 +32,17 @@ services:
   etl:
     build: ./etl
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      # API the ETL should call (VPS)
-      HEALTH_API_URL: http://${API_URL}:6644
+      # Mongo on homelab (same host: use host.docker.internal; or use db:27017 if Mongo is in same compose)
+      MONGO_URI: ${MONGO_URI}
 
-      # Users file with credentials (mounted below)
-      HEALTH_USERS_FILE: /secrets/users.json
-
-      # InfluxDB connection (same Influx as in this compose)
+      # InfluxDB (same compose)
       INFLUX_URL: http://influxdb:8086
       INFLUX_TOKEN: ${INFLUX_TOKEN}
       INFLUX_ORG: family
       INFLUX_BUCKET: health
 
-      # Optional: how often to run (seconds)
-      ETL_INTERVAL: 900
-
-    volumes:
-      # Not committed: copy users.json.example -> users.json and fill in real creds
-      - ./etl/users.json:/secrets/users.json:ro
+      ETL_INTERVAL: ${ETL_INTERVAL:-900}
+    # When Mongo runs in another compose on same host: MONGO_URI=mongodb://user:pass@host.docker.internal:27017/?authSource=admin

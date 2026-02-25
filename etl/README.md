@@ -1,6 +1,6 @@
-# ETL: Health API → InfluxDB (for Grafana)
+# ETL: MongoDB → InfluxDB (for Grafana)
 
-Fetches decrypted health data from the Health Collector API for each configured user and writes it to InfluxDB with a `user` tag. Grafana can then show all family members' data in one place.
+Reads health data from MongoDB (per-user DBs), decrypts locally with the same key derivation as the API, and writes to InfluxDB with a `user` tag. No API or users file: ETL runs on the same host as Mongo (e.g. homelab).
 
 ## Setup
 
@@ -14,15 +14,17 @@ Fetches decrypted health data from the Health Collector API for each configured 
    docker compose -f docker-compose.monitoring.yml up -d
    ```
 
-   Save `INFLUX_TOKEN`; you need it for the ETL and for Grafana's InfluxDB datasource.
+   Save `INFLUX_TOKEN` for the ETL and for Grafana's InfluxDB datasource.
 
 2. **ETL config**
 
-   - Copy `etl/users.json.example` to `etl/users.json` and set real username/password for each family member (same as app login).
+   - Set `MONGO_URI` to the same Mongo the API uses (e.g. homelab). If ETL runs in Docker and Mongo is on the host: `mongodb://user:pass@host.docker.internal:27017/?authSource=admin`.
    - Copy `etl/.env.example` to `etl/.env` and set:
-     - `HEALTH_API_URL` – your API base URL (e.g. `http://YOUR_VPS_IP:6644` or `https://api.example.com`)
-     - `INFLUX_URL` – usually `http://127.0.0.1:8086` if ETL runs on same host as InfluxDB
-     - `INFLUX_TOKEN` – same token you used when starting the monitoring stack
+     - `MONGO_URI` – required
+     - `INFLUX_URL` – e.g. `http://127.0.0.1:8086` (or `http://influxdb:8086` inside Docker)
+     - `INFLUX_TOKEN` – same token as the monitoring stack
+
+   Optional: `MONGO_USERS_DB` (default `hcgateway`), `MONGO_DATA_DB_PREFIX` (default `hcgateway_`) if your API uses different DB names.
 
 3. **Run ETL once**
 
@@ -34,12 +36,7 @@ Fetches decrypted health data from the Health Collector API for each configured 
 
 4. **Schedule ETL** (e.g. every 15 minutes)
 
-   ```bash
-   # crontab -e
-   */15 * * * * cd /path/to/HealthCollectorApp/etl && set -a && [ -f .env ] && . .env && set +a && python3 health_to_influx.py >> /var/log/health-etl.log 2>&1
-   ```
-
-   Or with a systemd timer, or run the ETL inside a small container that loops + sleep.
+   Crontab, systemd timer, or run the ETL container from `docker-compose.monitoring.yml` (it loops with `ETL_INTERVAL`).
 
 ## Grafana
 
@@ -58,6 +55,6 @@ Fetches decrypted health data from the Health Collector API for each configured 
      |> filter(fn: (r) => r["_measurement"] == "heartRate")
      |> filter(fn: (r) => r["user"] == v.user or v.user == "All")
    ```
-   Similar for `steps`, `sleepSession`, `weight`, etc. (measurement names match the ETL.)
+   Similar for `steps`, `sleepSession`, `weight`, etc.
 
 All users with access to this Grafana instance can see every family member's data by selecting the user in the dropdown or "All".
