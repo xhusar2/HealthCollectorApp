@@ -213,6 +213,8 @@ def fetch(method):
     if not method:
         return jsonify({'error': 'no method provided'}), 400
 
+    method = method[0].lower() + method[1:]
+
     userid = g.user
     db = mongo['heathconnectapp']
     usrStore = db['users']
