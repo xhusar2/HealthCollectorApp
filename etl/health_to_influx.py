@@ -185,8 +185,8 @@ def main():
         print("Set INFLUX_TOKEN (and optionally INFLUX_URL, INFLUX_ORG, INFLUX_BUCKET).", file=sys.stderr)
         sys.exit(1)
 
-    users_db_name = os.environ.get("MONGO_USERS_DB", "hcgateway")
-    data_db_prefix = os.environ.get("MONGO_DATA_DB_PREFIX", "hcgateway_")
+    users_db_name = os.environ.get("MONGO_USERS_DB", "heathconnectapp")
+    data_db_prefix = os.environ.get("MONGO_DATA_DB_PREFIX", "heathconnectapp_")
 
     client = pymongo.MongoClient(mongo_uri)
     users_db = client[users_db_name]
