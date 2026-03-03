@@ -311,6 +311,7 @@ const sync = async (customStartTime, customEndTime) => {
       );
 
       records = records.records;
+      if (!records || records.length === 0) continue;
       }
       catch (err) {
         console.log(err)
