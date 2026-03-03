@@ -320,8 +320,30 @@ const sync = async (customStartTime, customEndTime) => {
       numRecords += records.length;
 
       if (['SleepSession', 'Speed', 'HeartRate'].includes(recordTypes[i])) {
+        const batchSize = 100;
         console.log("INSIDE IF - ", recordTypes[i])
-        for (let j=0; j<records.length; j++) {
+        for (let j=0; j<records.length; j+=batchSize) {
+          const batch = []
+          for (let k=j; k < Math.min(j+batchSize, records.length); k++) {
+            try {
+              const record = await readRecord(recordTypes[i], records[k].metadata.id);
+              batch.push(record);
+            }
+            catch (err) {
+              console.log(err)
+              continue;
+            }
+          }
+          if (batch.length > 0) {
+            await axios.post(`${apiBase}/api/v2/sync/${recordTypes[i]}`, {
+              data: batch
+            }, {
+              headers: {
+                "Authorization": `Bearer ${login}`
+              }
+            })
+          }
+          numRecordsSynced += batch.length;
           console.log("INSIDE FOR", j, recordTypes[i])
           setTimeout(async () => {
             try {
